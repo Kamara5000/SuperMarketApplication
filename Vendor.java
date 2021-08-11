@@ -22,6 +22,8 @@ public class Vendor implements ActionListener{
     DefaultTableModel dtm;
     String tableHeader[] = {"Vendor ID", "Vendor Name", "Phone", "Email", "Address"};
     TableModel tableModel = new DefaultTableModel(tableHeader, 0);
+
+    JButton add,edit,delete;
    
    
    public Vendor(){
@@ -79,11 +81,12 @@ public class Vendor implements ActionListener{
        JPanel rightPanel = new JPanel();
            rightPanel.setBorder(new SoftBevelBorder(SoftBevelBorder.RAISED));
            rightPanel.setPreferredSize(new Dimension(650,500));
-       //JPanel tablPanel = new JPanel();
-       String tableHeader[] = {"Vendor ID", "Vendor Name", "Phone", "Email", "Address"};
-       String record[][] = {
+      
+    //    String tableHeader[] = {"Vendor ID", "Vendor Name", "Phone", "Email", "Address"};
+    //    String record[][] = {
           
-       };
+    //    };
+    //    table = new JTable(tableHeader,record); 
         
        table = new JTable(tableModel); 
        table.addMouseListener(new java.awt.event.MouseAdapter(){
@@ -97,6 +100,10 @@ public class Vendor implements ActionListener{
             phoneField.setText(dtm.getValueAt(rowSelected, 2).toString()); 
             mailField.setText(dtm.getValueAt(rowSelected, 3).toString()); 
             adressField.setText(dtm.getValueAt(rowSelected, 4).toString()); 
+
+            add.setEnabled(false);
+            edit.setEnabled(true);
+            delete.setEnabled(true);
            }
        });
        JScrollPane tableScroll = new JScrollPane(table);
@@ -109,7 +116,7 @@ public class Vendor implements ActionListener{
 
        JPanel lowerPanel = new JPanel(new FlowLayout());
            lowerPanel.setPreferredSize(new Dimension(600,100));
-       JButton add = new JButton("Add");
+       add = new JButton("Add");
            add.setPreferredSize(new Dimension(80,40));
            add.addActionListener(new ActionListener(){
                @Override
@@ -118,7 +125,7 @@ public class Vendor implements ActionListener{
                }
            });
            lowerPanel.add(add);
-       JButton edit = new JButton("Edit");
+       edit = new JButton("Edit");
             edit.addActionListener(new ActionListener(){
                 @Override
                 public void actionPerformed(ActionEvent evt){
@@ -135,9 +142,10 @@ public class Vendor implements ActionListener{
 
                 }
             });
+            edit.setEnabled(false);
             edit.setPreferredSize(new Dimension(80,40));
            lowerPanel.add(edit);
-       JButton delete = new JButton("Delete");
+       delete = new JButton("Delete");
        delete.addActionListener(new ActionListener(){
         @Override
             public void actionPerformed(ActionEvent evt){
@@ -153,6 +161,7 @@ public class Vendor implements ActionListener{
            
              }
          });
+           delete.setEnabled(false);
            delete.setPreferredSize(new Dimension(80,40));
            lowerPanel.add(delete);
        JButton cancel = new JButton("Cancel");
@@ -164,6 +173,10 @@ public class Vendor implements ActionListener{
                 mailField.setText("");
                 adressField.setText("");
                 nameField.requestFocus();
+
+                add.setEnabled(true);
+                edit.setEnabled(false);
+                delete.setEnabled(false);
 
                 }
             });
@@ -322,6 +335,10 @@ public class Vendor implements ActionListener{
         adressField.setText("");
         nameField.requestFocus();
 
+        add.setEnabled(true);
+        edit.setEnabled(false);
+        delete.setEnabled(false);
+
         fetchVendor(); 
         }
        } catch (Exception e) {
@@ -344,6 +361,10 @@ public class Vendor implements ActionListener{
          mailField.setText("");
          adressField.setText("");
          nameField.requestFocus();
+
+        add.setEnabled(true);
+        edit.setEnabled(false);
+        delete.setEnabled(false);
          fetchVendor(); 
         } catch (Exception e) {
             e.printStackTrace();
