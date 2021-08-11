@@ -17,7 +17,7 @@ public class Vendor implements ActionListener{
     JFrame frame;
     JTextField nameField,phoneField,adressField,mailField ;
     Connection con;
-    String record[][] = {};
+    //String record[][] = {};
     JTable table;
     DefaultTableModel dtm;
     String tableHeader[] = {"Vendor ID", "Vendor Name", "Phone", "Email", "Address"};
