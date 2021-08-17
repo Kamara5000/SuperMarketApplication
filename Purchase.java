@@ -57,7 +57,7 @@ public class Purchase {
        JPanel midPanel = new JPanel(new BorderLayout());
            midPanel.setPreferredSize(new Dimension(1000, 300));
            midPanel.setBorder(new SoftBevelBorder(SoftBevelBorder.RAISED));
-           //Component.CENTER_ALIGNMENT
+          
        
        JPanel leftPanel = new JPanel(new GridLayout(5,1));
            leftPanel.setBorder(new SoftBevelBorder(SoftBevelBorder.RAISED));
@@ -67,7 +67,7 @@ public class Purchase {
             JLabel barcodeLabel = new JLabel("Product Barcode");
             barcodePanel.add(barcodeLabel);
             barcodeField = new JTextField(20);
-            barcodeField.setText("Enter product Barcode then press enter");
+            barcodeField.setToolTipText("Enter product Barcode then press enter");
             barcodeField.addKeyListener(new java.awt.event.KeyAdapter(){
                 @Override
                 public void keyPressed(KeyEvent ke){
@@ -77,13 +77,7 @@ public class Purchase {
                     }
                 }
             });
-            barcodeField.addFocusListener(new java.awt.event.FocusAdapter(){
-                @Override
-                public void focusGained(java.awt.event.FocusEvent e){
-                        barcodeField.setText("");
-                }
-            });
-          
+            
             barcodePanel.add(barcodeField);
         leftPanel.add(barcodePanel);
 
@@ -143,7 +137,7 @@ public class Purchase {
             paymentField = new JTextField(20);
             paymentField.setText("0");
             paymentPanel.add(paymentField);
-            paymentField.setText("Enter payment made then press enter");
+            paymentField.setToolTipText("Enter payment made then press enter");
             paymentField.addKeyListener(new java.awt.event.KeyAdapter(){
                 @Override
                 public void keyPressed(KeyEvent ke){
@@ -162,12 +156,6 @@ public class Purchase {
                         
                         }
                     }
-                }
-            });
-            paymentField.addFocusListener(new java.awt.event.FocusAdapter(){
-                @Override
-                public void focusGained(java.awt.event.FocusEvent e){
-                        paymentField.setText("");
                 }
             });
         leftPanel.add(paymentPanel);
@@ -212,8 +200,8 @@ public class Purchase {
                         ((DefaultTableModel) tableModel).setRowCount(0);
                         totalCostField.setText("");
                         balanceField.setText("");
-                        paymentField.setText("Enter Balance then press enter");
-                        barcodeField.setText("Enter product barcode then press enter");
+                        paymentField.setText("0");
+                        barcodeField.setText("");
                         finalAdd.setEnabled(false);
                      }else if (option == 1) {
                         
