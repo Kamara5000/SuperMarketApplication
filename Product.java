@@ -27,7 +27,7 @@ public class Product {
         JButton add, edit,delete;
    
    public Product(){
-       //vendor
+       
        frame = new JFrame();
        frame.setSize(new Dimension(1200,600));
        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

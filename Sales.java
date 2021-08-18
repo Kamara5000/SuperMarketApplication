@@ -17,7 +17,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.ActionEvent;
 
-public class Purchase {
+public class Sales {
     JFrame frame;
     JTextField nameField,barcodeField,priceField, totalField, quantityField,  totalCostField, paymentField, balanceField;
     Connection con;
@@ -29,35 +29,32 @@ public class Purchase {
     TableModel tableModel = new DefaultTableModel(tableHeader, 0);
 
         JButton add, edit,delete, finalAdd;
-        JComboBox vField;
-   
-   public Purchase(){
+
+   public Sales(){
        frame = new JFrame();
        frame.setSize(new Dimension(1200,600));
        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
        frame.setLocation(new Point(100,50));
-       frame.setTitle("Purchase");
+       frame.setTitle("Sales");
        frame.setIconImage(Toolkit.getDefaultToolkit().getImage("images/superMarketIcon.jpg"));
        frame.setLayout(new BorderLayout());
 
 
-       JLabel vHeader = new JLabel("Purchase");
+       JLabel vHeader = new JLabel("Sales");
        vHeader.setFont(new Font("Algerian",  Font.BOLD, 30));
        JPanel headerPanel = new JPanel(new BorderLayout());
        headerPanel.add(vHeader,BorderLayout.WEST);
        JPanel vPanel = new JPanel();
-       JLabel vLabel = new JLabel("Vendor");
-       vField = new JComboBox<>();
+    //    JLabel vLabel = new JLabel("Vendor");
+    //    vField = new JComboBox<>();
      
-        vPanel.add(vLabel);
-        vPanel.add(vField);
-       headerPanel.add(vPanel, BorderLayout.EAST);
+    //     vPanel.add(vLabel);
+    //     vPanel.add(vField);
+    //    headerPanel.add(vPanel, BorderLayout.EAST);
        
        JPanel midPanel = new JPanel(new BorderLayout());
            midPanel.setPreferredSize(new Dimension(1000, 300));
            midPanel.setBorder(new SoftBevelBorder(SoftBevelBorder.RAISED));
-          
-       
        JPanel leftPanel = new JPanel(new GridLayout(5,1));
            leftPanel.setBorder(new SoftBevelBorder(SoftBevelBorder.RAISED));
            leftPanel.setPreferredSize(new Dimension(500,200));
@@ -72,11 +69,9 @@ public class Purchase {
                 public void keyPressed(KeyEvent ke){
                     if(ke.getKeyCode() == KeyEvent.VK_ENTER){
                     fetchProduct();
-                    quantityField.requestFocus();
                     }
                 }
-            });
-            
+            });      
             barcodePanel.add(barcodeField);
         leftPanel.add(barcodePanel);
 
@@ -108,8 +103,7 @@ public class Purchase {
             add.addActionListener(new ActionListener(){
                 @Override
                 public void actionPerformed(ActionEvent ae){
-                    purchase();
-                    add.setEnabled(false);
+                   sales();
                  }
             });
             add.setPreferredSize(new Dimension(60,40));
@@ -135,8 +129,8 @@ public class Purchase {
             paymentPanel.add(paymentLabel);
             paymentField = new JTextField(20);
             paymentField.setText("0");
+            paymentField.setToolTipText("Enter payment made then press entrer");
             paymentPanel.add(paymentField);
-            paymentField.setToolTipText("Enter payment made then press enter");
             paymentField.addKeyListener(new java.awt.event.KeyAdapter(){
                 @Override
                 public void keyPressed(KeyEvent ke){
@@ -149,7 +143,7 @@ public class Purchase {
                             }else{
                             int pay = Integer.parseInt(payment);
                             int subTotal = Integer.parseInt(cost);
-                            int balance = subTotal-pay;
+                            int balance = pay-subTotal;
                              balanceField.setText(balance + "");
                              finalAdd.setEnabled(true);
                         
@@ -192,14 +186,14 @@ public class Purchase {
            finalAdd.addActionListener(new ActionListener(){
                @Override
                public void actionPerformed(ActionEvent ae){
-                int option = JOptionPane.showConfirmDialog(null, "Are you sure you want make this purchase", "warning", JOptionPane.YES_NO_CANCEL_OPTION);
+                int option = JOptionPane.showConfirmDialog(null, "Are you sure you want make this sales", "warning", JOptionPane.YES_NO_CANCEL_OPTION);
                     //0 is yes, 1 is no 
                     if (option == 0) {
                         finalAdd();
                         ((DefaultTableModel) tableModel).setRowCount(0);
                         totalCostField.setText("");
                         balanceField.setText("");
-                        paymentField.setText("0");
+                        paymentField.setText("");
                         barcodeField.setText("");
                         finalAdd.setEnabled(false);
                      }else if (option == 1) {
@@ -236,7 +230,7 @@ public class Purchase {
        frame.setVisible(true);
 
        connect();
-       fetchVendor();
+       
    }
 
    public void connect(){
@@ -252,24 +246,6 @@ public class Purchase {
 
 }
 
-public void fetchVendor(){
-    try {
-     //selecting list of registered vendor 
-     PreparedStatement prest = con.prepareStatement("select Distinct name from vendor");
-     ResultSet rs = prest.executeQuery();
-     vField.removeAll();
-    
-   while(rs.next()){
-    
-           vField.addItem(rs.getString("name"));
-     }
-   
-
- //  con.close();
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-}
 
 public void fetchProduct(){
     try {
@@ -289,7 +265,8 @@ public void fetchProduct(){
             
         } else {
             JOptionPane.showMessageDialog(null, "Barcode not found"); 
-            barcodeField.setText("");   
+            barcodeField.setText("");  
+            quantityField.requestFocus(); 
         }
         
     } catch (Exception e) {
@@ -297,36 +274,63 @@ public void fetchProduct(){
     }
 }
 
-public void purchase(){
+public void sales(){
     try {
-        int price = Integer.parseInt(priceField.getText());
-        int qty = Integer.parseInt(quantityField.getText());
 
-        int total = price*qty;
+        String barcode = barcodeField.getText();
+        PreparedStatement prest = con.prepareStatement("select * from product where product_barcode = ?");
+        prest.setString(1, barcode);
+        ResultSet rs = prest.executeQuery();
+
+            while(rs.next()){
+
+                //checking if available number of item is enough for sale
+                int availableQuantity;
+                availableQuantity = rs.getInt("product_quantity");
+
+                int price = Integer.parseInt(priceField.getText());
+                int qty = Integer.parseInt(quantityField.getText());
         
-        //adding row to the purchase table
-        dtm = (DefaultTableModel)table.getModel();
-        dtm.addRow(new Object[]{
-        barcodeField.getText(),
-        nameField.getText(),
-        priceField.getText(),
-        quantityField.getText(),
-        total
-        });
+                int total = price*qty;
 
-        //getting value from total column to add up  to obtain the total cost
-        int c = dtm.getRowCount();
-        int addtotal = 0; 
-        for (int i = 0; i < c; i++) {
-            addtotal= addtotal+Integer.parseInt(table.getValueAt(i, 4).toString());
-        }
-        totalCostField.setText(addtotal+"");
+                if (qty >= availableQuantity){
+                    JOptionPane.showMessageDialog(null, "Available Quantity is " + availableQuantity);
+                    quantityField.requestFocus();
+                    add.setEnabled(true);
+                } else {
+                  //adding each item to row in the sales table
+                    dtm = (DefaultTableModel)table.getModel();
+                    dtm.addRow(new Object[]{
+                    barcodeField.getText(),
+                    nameField.getText(),
+                    priceField.getText(),
+                    quantityField.getText(),
+                    total
+                    });  
 
-        barcodeField.setText("");
-        nameField.setText("");
-        priceField.setText("");
-        quantityField.setText("1");
-        barcodeField.requestFocus();
+                    
+                    //getting value from total column to add up  to obtain the total cost
+                    int c = dtm.getRowCount();
+                    int addtotal = 0; 
+                    for (int i = 0; i < c; i++) {
+                        addtotal= addtotal+Integer.parseInt(table.getValueAt(i, 4).toString());
+                    }
+                    totalCostField.setText(addtotal+"");
+
+                    barcodeField.setText("");
+                    nameField.setText("");
+                    priceField.setText("");
+                    quantityField.setText("1");
+                    barcodeField.requestFocus();
+
+                    add.setEnabled(false);
+                }
+            }
+
+       
+        
+        
+
 
     } catch (Exception e) {
         //TODO: handle exception
@@ -342,32 +346,31 @@ public void finalAdd(){
         LocalDateTime now = LocalDateTime.now();
          String date = dt.format(now);
          
-         String totalPurchase = totalCostField.getText();
+         String totalCost = totalCostField.getText();
          String payment = paymentField.getText();
          String balance = balanceField.getText();
-         String vendor = vField.getSelectedItem().toString();
+         
         
-         //inserting the purchase into the purchases table in the  database
+         //inserting the sales into the purchases table in the  database
          int lastid = 0;
-         String query1="insert into purchases(purchase_date,vendor, total_purchase, payment, balance) values(?,?,?,?,?)"; 
+         String query1="insert into sales(sales_date, total, payment, balance) values(?,?,?,?)"; 
          PreparedStatement prest1 = con.prepareStatement(query1, Statement.RETURN_GENERATED_KEYS);
          prest1.setString(1, date);
-         prest1.setString(2, vendor);
-         prest1.setString(3, totalPurchase);
-         prest1.setString(4, payment);
-         prest1.setString(5, balance);
+         prest1.setString(2, totalCost);
+         prest1.setString(3, payment);
+         prest1.setString(4, balance);
          prest1.executeUpdate();
          ResultSet rs = prest1.getGeneratedKeys();
         
          if (rs.next()) {
 
-            //this will generate an id for the purchase to be use as a foreign key for all item purchase together
-            //it will be save as purchase id in the purchase_items table
+            //this will generate an id for the sales to be use as a foreign key for all item sold  together
+            //it will be save as sales_id in the sales_items table
             lastid = rs.getInt(1);
          }
 
-         //inserting all purchase items into the purchase_items table in the database
-         String query2="insert into purchase_items(purchase_id, product_id, retail_price, quantity, total) values(?,?,?,?,?)"; 
+         //inserting all sold items into the sales_items table in the database
+         String query2="insert into sales_items(sales_id, product_id, price, quantity, total) values(?,?,?,?,?)"; 
          PreparedStatement prest2 = con.prepareStatement(query2);
 
          String productId;
@@ -391,8 +394,8 @@ public void finalAdd(){
          }
 
 
-         // the total quantity of each avaibale product in the product table need to be increment for each purchase of the product 
-         String query3="update product set product_quantity = product_quantity + ? where product_barcode = ?"; 
+         // the total quantity of each avaibale product in the product table need to decrement for each sales of the product 
+         String query3="update product set product_quantity = product_quantity - ? where product_barcode = ?"; 
          PreparedStatement prest3 = con.prepareStatement(query3);
 
         String productBcode;
@@ -406,7 +409,7 @@ public void finalAdd(){
             prest3.executeUpdate();
         }
 
-        JOptionPane.showMessageDialog(null, "New Purchase made succesfully");
+        JOptionPane.showMessageDialog(null, "New sales made succesfully");
 
 
 
@@ -430,8 +433,10 @@ public void finalAdd(){
 
 }
 
+
+
 public static void main(String[] args) {
-    Purchase pS = new Purchase();
+    Sales sL = new Sales();
 }
 }
 //after javac projectname.java
