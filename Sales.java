@@ -1,23 +1,24 @@
 import java.awt.*;
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.SoftBevelBorder;
-import javax.swing.event.MouseInputListener;
-import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.sql.*;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Vector;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.ActionEvent;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.Printable;
+import static java.awt.print.Printable.NO_SUCH_PAGE;
+import static java.awt.print.Printable.PAGE_EXISTS;
+import java.awt.print.PrinterJob;
+import java.awt.print.PrinterException;
 
-public class Sales {
+public class Sales{
     JFrame frame;
     JTextField nameField,barcodeField,priceField, totalField, quantityField,  totalCostField, paymentField, balanceField;
     Connection con;
@@ -27,10 +28,14 @@ public class Sales {
     String tableHeader[] = {"Product Barcode", "Product Name", "Price","Quantity", 
                             "Total"};
     TableModel tableModel = new DefaultTableModel(tableHeader, 0);
+    JButton add, edit,delete, finalAdd, prnt;
+    Double bHeight=0.0;
+    int lastid = 0;
 
-        JButton add, edit,delete, finalAdd;
+    String admin;
 
-   public Sales(){
+   public Sales(String ad){
+       admin = ad;
        frame = new JFrame();
        frame.setSize(new Dimension(1200,600));
        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -45,12 +50,14 @@ public class Sales {
        JPanel headerPanel = new JPanel(new BorderLayout());
        headerPanel.add(vHeader,BorderLayout.WEST);
        JPanel vPanel = new JPanel();
-    //    JLabel vLabel = new JLabel("Vendor");
-    //    vField = new JComboBox<>();
-     
-    //     vPanel.add(vLabel);
-    //     vPanel.add(vField);
-    //    headerPanel.add(vPanel, BorderLayout.EAST);
+       JLabel vLabel = new JLabel("Cashier :");
+
+       vLabel.setFont(new Font("Constantia",  Font.BOLD, 20));
+        JLabel vField = new JLabel(admin);
+        vField.setFont(new Font("Constantia",  Font.BOLD, 20));
+        vPanel.add(vLabel);
+        vPanel.add(vField);
+       headerPanel.add(vPanel, BorderLayout.EAST);
        
        JPanel midPanel = new JPanel(new BorderLayout());
            midPanel.setPreferredSize(new Dimension(1000, 300));
@@ -165,12 +172,6 @@ public class Sales {
            rightPanel.setBorder(new SoftBevelBorder(SoftBevelBorder.RAISED));
            rightPanel.setPreferredSize(new Dimension(700,500));        
        table = new JTable(tableModel); 
-       table.addMouseListener(new java.awt.event.MouseAdapter(){
-        @Override
-        public void mouseClicked(MouseEvent evt){
-            
-           }
-       });
        JScrollPane tableScroll = new JScrollPane(table);
        tableScroll.setPreferredSize(new Dimension(650, 350));
        rightPanel.add(tableScroll);
@@ -190,12 +191,8 @@ public class Sales {
                     //0 is yes, 1 is no 
                     if (option == 0) {
                         finalAdd();
-                        ((DefaultTableModel) tableModel).setRowCount(0);
-                        totalCostField.setText("");
-                        balanceField.setText("");
-                        paymentField.setText("");
-                        barcodeField.setText("");
                         finalAdd.setEnabled(false);
+                        prnt.setEnabled(true);
                      }else if (option == 1) {
                         
                      }else{
@@ -207,7 +204,41 @@ public class Sales {
            finalAdd.setEnabled(false);
            lowerPanel.add(finalAdd);
         
-        
+           prnt = new JButton("Print Receipt");
+           prnt.setPreferredSize(new Dimension(100,40));
+            prnt.addActionListener(new ActionListener(){
+              @Override
+              public void actionPerformed(ActionEvent evt){
+                 try {
+                     printReceipt();
+
+                 } catch (Exception e) {
+                     e.printStackTrace();
+                 }
+             }
+              });
+              prnt.setEnabled(false);
+             lowerPanel.add(prnt);
+
+             JButton clear = new JButton("Clear");
+           clear.setPreferredSize(new Dimension(100,40));
+            clear.addActionListener(new ActionListener(){
+              @Override
+              public void actionPerformed(ActionEvent evt){
+                 try {
+                    ((DefaultTableModel) tableModel).setRowCount(0);
+                    totalCostField.setText("");
+                    balanceField.setText("");
+                    paymentField.setText("");
+                    barcodeField.setText("");
+                    finalAdd.setEnabled(false);
+                    prnt.setEnabled(false);
+                 } catch (Exception e) {
+                     e.printStackTrace();
+                 }
+             }
+              });
+             lowerPanel.add(clear);
 
            JButton exit = new JButton("Exit");
            exit.addActionListener(new ActionListener(){
@@ -218,6 +249,7 @@ public class Sales {
               });
              exit.setPreferredSize(new Dimension(80,40));
              lowerPanel.add(exit);
+             
              
              
         JPanel lp = new JPanel(new BorderLayout());
@@ -274,6 +306,8 @@ public void fetchProduct(){
     }
 }
 
+
+//ading each item in to the table 
 public void sales(){
     try {
 
@@ -327,11 +361,6 @@ public void sales(){
                 }
             }
 
-       
-        
-        
-
-
     } catch (Exception e) {
         //TODO: handle exception
     }
@@ -339,6 +368,7 @@ public void sales(){
 
 }
 
+//finally making the sale and adding to the database
 public void finalAdd(){
     
        try {
@@ -352,7 +382,6 @@ public void finalAdd(){
          
         
          //inserting the sales into the purchases table in the  database
-         int lastid = 0;
          String query1="insert into sales(sales_date, total, payment, balance) values(?,?,?,?)"; 
          PreparedStatement prest1 = con.prepareStatement(query1, Statement.RETURN_GENERATED_KEYS);
          prest1.setString(1, date);
@@ -419,8 +448,120 @@ public void finalAdd(){
        }
 
 }
- 
 
+//printing the sales receipt
+ public void printReceipt(){
+    bHeight = Double.valueOf(table.getSize().getHeight()); 
+        PrinterJob pj = PrinterJob.getPrinterJob();        
+        pj.setPrintable(new BillPrintable(),getPageFormat(pj));
+        try {
+             pj.print();
+          
+        }
+         catch (PrinterException ex) {
+                 ex.printStackTrace();
+        }
+   
+ }
+
+ //setting the page format
+ public PageFormat getPageFormat(PrinterJob pj){
+     PageFormat pf = pj.defaultPage();
+     Paper paper = pf.getPaper();    
+ 
+     double bodyHeight = bHeight;  
+     double headerHeight = 5.0;                  
+     double footerHeight = 5.0;        
+     double width = cm_to_pp(8); 
+     double height = cm_to_pp(headerHeight+bodyHeight+footerHeight); 
+     paper.setSize(width, height);
+     paper.setImageableArea(0,10,width,height - cm_to_pp(1));  
+             
+     pf.setOrientation(PageFormat.PORTRAIT);  
+     pf.setPaper(paper);    
+ 
+     return pf;
+ }
+    
+     
+     //cm-pixel-inch
+     protected static double cm_to_pp(double cm){            
+             return toPPI(cm * 0.393600787);            
+     }
+  
+     protected static double toPPI(double inch){            
+             return inch * 72d;            
+     }
+     
+//impelementing printable and drawing all details needed on the receipt
+ public class BillPrintable implements Printable {
+    public int print(Graphics graphics, PageFormat pageFormat,int pageIndex) 
+    throws PrinterException {    
+        
+        int r= (int) table.getSize().getHeight();
+        ImageIcon icon=new ImageIcon("images/icon.jpg"); 
+        int result = NO_SUCH_PAGE;  
+        
+        DateTimeFormatter dt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDateTime now = LocalDateTime.now();
+        String todaydate = dt.format(now);
+         
+          
+        if (pageIndex == 0) {                    
+          
+              Graphics2D g2d = (Graphics2D) graphics;                    
+              double width = pageFormat.getImageableWidth();                               
+              g2d.translate((int) pageFormat.getImageableX(),(int) pageFormat.getImageableY());         
+          try{
+              int y=20;
+              int yShift = 10;
+              int headerRectHeight=15;
+            
+              g2d.setFont(new Font("Monospaced",Font.PLAIN,9));
+              g2d.drawImage(icon.getImage(), 50, 20, 90, 30, null);y+=yShift+30;
+              g2d.drawString("-------------------------------------",12,y);y+=yShift;
+              g2d.drawString("         SUPERMARKET RECEIPT      ",12,y);y+=yShift;
+              g2d.drawString("        No 786 General, Ilorin ",12,y);y+=yShift;
+              g2d.drawString("          Twitter @kamara_MI ",12,y);y+=yShift;
+              g2d.drawString("   Email @ ibrahimayodeji31@gmail.com ",12,y);y+=yShift;
+              g2d.drawString("        Tel :+2348108711155      ",12,y);y+=yShift;
+              g2d.drawString("        RECEIPT : " +lastid,12,y);y+=yShift;
+              g2d.drawString("        DATE :" + todaydate,12,y);y+=yShift;
+              g2d.drawString("        CASHIER :" + admin,12,y);y+=yShift;
+              g2d.drawString("-------------------------------------",12,y);y+=headerRectHeight;
+  
+              g2d.drawString(" Item Name                  Price   ",10,y);y+=yShift;
+              g2d.drawString("-------------------------------------",10,y);y+=headerRectHeight;
+       
+        
+            int c = table.getRowCount(); 
+            for (int i = 0; i < c; i++) {
+            g2d.drawString(" "+table.getValueAt(i, 1).toString()+"                            ",10,y);y+=yShift;
+            g2d.drawString("      "+table.getValueAt(i, 3).toString()+" * $"+table.getValueAt(i, 2).toString(),10,y); g2d.drawString("$" + table.getValueAt(i, 4).toString(),160,y);y+=yShift;
+            }
+            
+            g2d.drawString("-------------------------------------",10,y);y+=yShift;
+            g2d.drawString(" Total amount:               $"+totalCostField.getText()+"   ",10,y);y+=yShift;
+            g2d.drawString("-------------------------------------",10,y);y+=yShift;
+            g2d.drawString(" Payment      :                 $"+paymentField.getText()+"   ",10,y);y+=yShift;
+            g2d.drawString("-------------------------------------",10,y);y+=yShift;
+            g2d.drawString(" Balance   :                 $"+balanceField.getText()+"   ",10,y);y+=yShift;
+
+            g2d.drawString("***********************************",10,y);y+=yShift;
+            g2d.drawString("       THANK YOU COME AGAIN            ",10,y);y+=yShift;
+            g2d.drawString("***********************************",10,y);y+=yShift;
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+  
+            result = PAGE_EXISTS;    
+        }    
+            return result;    
+    }
+}
+
+    
 
  public void actionPerformed(ActionEvent ae){  
  
@@ -436,7 +577,7 @@ public void finalAdd(){
 
 
 public static void main(String[] args) {
-    Sales sL = new Sales();
+    Sales sL = new Sales(null);
 }
 }
 //after javac projectname.java

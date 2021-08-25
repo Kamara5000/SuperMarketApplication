@@ -135,7 +135,7 @@ public class LogIn {
                 
 
                     if (p.equals(passE)) {
-                       SuperMarketApp ap = new SuperMarketApp();
+                       SuperMarketApp ap = new SuperMarketApp(uname);
                        frame.setVisible(false);
                         
                     } else {
